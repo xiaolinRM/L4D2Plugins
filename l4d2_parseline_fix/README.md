@@ -1,11 +1,32 @@
-About:
-  1. Fix non ASCII characters in cfg file that cannot be executed.
-  2. Interpret /* */ as a comment block.
+# Parse Line Fix
 
-ConVars:
-  1. l4d2_parseline_fix_blockcomment "1" // Interpret /* */ as a comment block
-  2. l4d2_parseline_fix_version // Parse Line Fix Plugin Version
+* About:
+  * Fix non ASCII characters in cfg file that cannot be executed.
+  * Interpret /* */ as a comment block.
 
-Installation:
+* Applicable to:
+  * L4D2
+
+* Example:
+  * CFG file:
+  <br/>![CFG](image/cfg.png)
+  * Before:
+  <br/>![Before](image/before.png)
+  * After:
+  <br/>![After](image/after.png)
+
+* ConVars:
+  ```php
+  // Interpret /* */ as a comment block
+  l4d2_parseline_fix_blockcomment "1"
+
+  // Parse Line Fix Plugin Version
+  l4d2_parseline_fix_version
+  ```
+
+* Requirements:
+  1. SourceMod 1.11.6820+ or [DHooks](https://forums.alliedmods.net/showpost.php?p=2588686)
+
+* Installation:
   1. Put the l4d2_parseline_fix.txt in your servers \addons\sourcemod\gamedata\ folder.
   2. Put the l4d2_parseline_fix.smx in your servers \addons\sourcemod\plugins\ folder.
