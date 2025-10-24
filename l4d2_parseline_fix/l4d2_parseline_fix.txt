@@ -2,23 +2,36 @@
 {
 	"left4dead2"
 	{
-		"MemPatches"
+		"Functions"
 		{
-			"ParseLine_Patch"
+			"COM_ParseLine"
 			{
 				"signature"		"COM_ParseLine"
-				"linux"
+				"callconv"		"cdecl"
+				"return"		"int"
+				"this"			"ignore"
+				"arguments"
 				{
-					"offset"		"38"
-					"verify"		"\x83\xF9\x09\x75\x20"
-					"patch"		"\x83\xF9\x0A\x74\x25"
-					
+					"string"
+					{
+						"type"		"charptr"
+					}
 				}
+			}
+		}
+
+		"Addresses"
+		{
+			"com_token"
+			{
 				"windows"
 				{
-					"offset"		"36"
-					"verify"		"\x83\xF9\x20\x7D\x05\x83\xF9\x09\x75\x08"
-					"patch"		"\x83\xF9\x0A\x74\x0D\x83\xF9\x0D\x74\x08"
+					"signature" "COM_ParseLine"
+					"read"	"10"
+				}
+				"linux"
+				{
+					"signature" "com_token"
 				}
 			}
 		}
@@ -31,6 +44,12 @@
 				"linux"		"@_Z13COM_ParseLinePKc"
 				"windows"	"\x55\x8B\xEC\x8B\x45\x08\x33\xD2\x88\x15"
 				/* 55 8B EC 8B 45 08 33 D2 88 15 */
+			}
+
+			"com_token"
+			{
+				"library"	"engine"
+				"linux"		"@com_token"
 			}
 		}
 	}
