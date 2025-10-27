@@ -1,0 +1,114 @@
+#pragma semicolon 1
+#pragma newdecls required
+#pragma tabsize 4
+
+#include <sourcemod>
+#include <sdkhooks>
+
+#define PLUGIN_VERSION	"1.0"
+
+public Plugin myinfo = 
+{
+	name = "[L4D2] Health Buffer Fix",
+	author = "xiaolinRM",
+	description = "Fix the issue where health buffer display cannot exceed 200",
+	version = PLUGIN_VERSION,
+	url = "https://github.com/xiaolinRM/L4D2Plugins/tree/main/l4d2_healthbuffer_fix"
+};
+
+float pain_pills_decay_rate;
+
+public void OnPluginStart()
+{
+    CreateConVar("l4d2_healthbuffer_fix_version", PLUGIN_VERSION, "Health Buffer Fix Plugin Version", FCVAR_NOTIFY|FCVAR_DONTRECORD);
+
+    ConVar convar = FindConVar("pain_pills_decay_rate");
+    convar.AddChangeHook(OnConVarChanged);
+    pain_pills_decay_rate = convar.FloatValue;
+    if (!pain_pills_decay_rate)
+    {
+        PrintToServer("The value of pain_pills_decay_rate is 0, Health buffer display fix is now disabled.");
+        return;
+    }
+
+    HookEvent("pills_used", Event_CheckEvent);
+    HookEvent("adrenaline_used", Event_CheckEvent);
+    HookEvent("player_hurt", Event_CheckEvent);
+    for (int client = 1; client <= MaxClients; client++)
+        if (IsClientInGame(client))
+            SDKHook(client, SDKHook_PostThinkPost, OnPostThinkPost);
+}
+
+public void OnPluginEnd()
+{
+    UpdateHealthBuffer();
+}
+
+public void OnClientPutInServer(int client)
+{
+    if (pain_pills_decay_rate)
+        SDKHook(client, SDKHook_PostThinkPost, OnPostThinkPost);
+}
+
+public void OnPostThinkPost(int client)
+{
+    CheckPlayerHealthBuffer(client);
+}
+
+public void Event_CheckEvent(Event event, const char[] name, bool dontBroadcast)
+{
+    int client = GetClientOfUserId(event.GetInt("userid"));
+    if (client) CheckPlayerHealthBuffer(client);
+}
+
+public void OnConVarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
+{
+    float value = convar.FloatValue;
+    if (value == pain_pills_decay_rate) return;
+    UpdateHealthBuffer();
+    float old = pain_pills_decay_rate;
+    pain_pills_decay_rate = value;
+    if (!old && pain_pills_decay_rate)
+    {
+        HookEvent("pills_used", Event_CheckEvent);
+        HookEvent("adrenaline_used", Event_CheckEvent);
+        HookEvent("player_hurt", Event_CheckEvent);
+        for (int client = 1; client <= MaxClients; client++)
+            if (IsClientInGame(client))
+                SDKHook(client, SDKHook_PostThinkPost, OnPostThinkPost);
+        PrintToServer("Health buffer display fix is now enabled.");
+    }
+    else if (old && !pain_pills_decay_rate)
+    {
+        UnhookEvent("pills_used", Event_CheckEvent);
+        UnhookEvent("adrenaline_used", Event_CheckEvent);
+        UnhookEvent("player_hurt", Event_CheckEvent);
+        for (int client = 1; client <= MaxClients; client++)
+            if (IsClientInGame(client))
+                SDKUnhook(client, SDKHook_PostThinkPost, OnPostThinkPost);
+        PrintToServer("The value of pain_pills_decay_rate is 0, Health buffer display fix is now disabled.");
+    }
+}
+
+void CheckPlayerHealthBuffer(int client)
+{
+    if (!IsClientInGame(client) || GetClientTeam(client) != 2 || !IsPlayerAlive(client)) return;
+    float health = GetEntPropFloat(client, Prop_Send, "m_healthBuffer") - 200.0;
+    if (health <= 0.0) return;
+    SetEntPropFloat(client, Prop_Send, "m_healthBuffer", 200.0);
+    float time = GetEntPropFloat(client, Prop_Send, "m_healthBufferTime");
+    time += health / pain_pills_decay_rate;
+    SetEntPropFloat(client, Prop_Send, "m_healthBufferTime", time);
+}
+
+void UpdateHealthBuffer()
+{
+    float gameTime = GetGameTime();
+    for (int client = 1; client <= MaxClients; client++)
+    {
+        if (!IsClientInGame(client) || GetClientTeam(client) != 2 || !IsPlayerAlive(client)) continue;
+        float health = GetEntPropFloat(client, Prop_Send, "m_healthBuffer") - (gameTime - GetEntPropFloat(client, Prop_Send, "m_healthBufferTime")) * pain_pills_decay_rate;
+        SetEntPropFloat(client, Prop_Send, "m_healthBuffer", health);
+        SetEntPropFloat(client, Prop_Send, "m_healthBufferTime", gameTime);
+    }
+}
