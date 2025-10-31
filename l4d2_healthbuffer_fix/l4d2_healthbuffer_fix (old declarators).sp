@@ -4,7 +4,7 @@
 #include <sourcemod>
 #include <sdkhooks>
 
-#define PLUGIN_VERSION	"1.0"
+#define PLUGIN_VERSION	"1.1"
 
 public Plugin:myinfo = 
 {
@@ -64,7 +64,7 @@ public OnConVarChanged(Handle:convar, const String:oldValue[], const String:newV
 {
     new Float:value = GetConVarFloat(convar);
     if (value == pain_pills_decay_rate) return;
-    UpdateHealthBuffer();
+    UpdateHealthBuffer(value);
     new Float:old = pain_pills_decay_rate;
     pain_pills_decay_rate = value;
     if (!old && pain_pills_decay_rate)
@@ -92,22 +92,42 @@ public OnConVarChanged(Handle:convar, const String:oldValue[], const String:newV
 CheckPlayerHealthBuffer(client)
 {
     if (!IsClientInGame(client) || GetClientTeam(client) != 2 || !IsPlayerAlive(client)) return;
-    new Float:health = GetEntPropFloat(client, Prop_Send, "m_healthBuffer") - 200.0;
-    if (health <= 0.0) return;
+    new Float:health = GetEntPropFloat(client, Prop_Send, "m_healthBuffer");
+    if (!health) return;
+    if (health < 0.0)
+    {
+        SetEntPropFloat(client, Prop_Send, "m_healthBuffer", 0.0);
+        return;
+    }
+    if (health <= 200.0) return;
     SetEntPropFloat(client, Prop_Send, "m_healthBuffer", 200.0);
     new Float:time = GetEntPropFloat(client, Prop_Send, "m_healthBufferTime");
-    time += health / pain_pills_decay_rate;
+    time += (health - 200.0) / pain_pills_decay_rate;
     SetEntPropFloat(client, Prop_Send, "m_healthBufferTime", time);
 }
 
-UpdateHealthBuffer()
+UpdateHealthBuffer(Float:newValue = 0.0)
 {
     new Float:gameTime = GetGameTime();
     for (new client = 1; client <= MaxClients; client++)
     {
         if (!IsClientInGame(client) || GetClientTeam(client) != 2 || !IsPlayerAlive(client)) continue;
-        new Float:health = GetEntPropFloat(client, Prop_Send, "m_healthBuffer") - (gameTime - GetEntPropFloat(client, Prop_Send, "m_healthBufferTime")) * pain_pills_decay_rate;
+        new Float:health = GetEntPropFloat(client, Prop_Send, "m_healthBuffer");
+        if (!health) continue;
+        if (health < 0.0)
+        {
+            SetEntPropFloat(client, Prop_Send, "m_healthBuffer", 0.0);
+            continue;
+        }
+        new Float:time = gameTime;
+        health -= (gameTime - GetEntPropFloat(client, Prop_Send, "m_healthBufferTime")) * pain_pills_decay_rate;
+        if (health < 0.0) health = 0.0;
+        else if (newValue && health > 200.0)
+        {
+            time += (health - 200.0) / newValue;
+            health = 200.0;
+        }
         SetEntPropFloat(client, Prop_Send, "m_healthBuffer", health);
-        SetEntPropFloat(client, Prop_Send, "m_healthBufferTime", gameTime);
+        SetEntPropFloat(client, Prop_Send, "m_healthBufferTime", time);
     }
 }

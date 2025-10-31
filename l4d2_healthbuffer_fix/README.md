@@ -7,7 +7,7 @@
 
 * Applicable to:
   * L4D2
-  * *L4D1 (Not tested)*
+  * *L4D1? (Is there also such a problem? Not tested)*
 
 * Example:
   * Before:
