@@ -5,20 +5,28 @@
 #include <sourcemod>
 #include <dhooks>
 
-#define PLUGIN_VERSION	"1.1"
+#define PLUGIN_VERSION "1.2"
 #define GAMEDATA "l4d2_parseline_fix"
+
+public Plugin myinfo =
+{
+    name = "[L4D & L4D2] Parse Line Fix",
+    author = "xiaolinRM",
+    description = "Fix non ASCII characters in cfg file that cannot be executed.",
+    version = PLUGIN_VERSION,
+    url = "https://github.com/xiaolinRM/L4D2Plugins/tree/main/l4d2_parseline_fix"
+};
 
 Address com_token;
 bool g_bBlockComment;
 
-public Plugin myinfo =
+public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
 {
-	name = "[L4D2] Parse Line Fix",
-	author = "xiaolinRM",
-	description = "Fix non ASCII characters in cfg file that cannot be executed.",
-	version = PLUGIN_VERSION,
-	url = "https://github.com/xiaolinRM/L4D2Plugins/tree/main/l4d2_parseline_fix"
-};
+    EngineVersion engine = GetEngineVersion();
+    if (engine == Engine_Left4Dead || engine == Engine_Left4Dead2) return APLRes_Success;
+    strcopy(error, err_max, "Plugin only supports Left 4 Dead 1 & 2.");
+    return APLRes_SilentFailure;
+}
 
 public void OnPluginStart()
 {
@@ -29,13 +37,13 @@ public void OnPluginStart()
     if (!com_token) SetFailState("Failed to load address: \"com_token\"");
 
     DynamicDetour hDetour = DynamicDetour.FromConf(hGameData, "COM_ParseLine");
-    if(!hDetour || !hDetour.Enable(Hook_Pre, COM_ParseLine))
+    if (!hDetour || !hDetour.Enable(Hook_Pre, COM_ParseLine))
         SetFailState("Failed to create hook: \"COM_ParseLine\"");
 
     delete hGameData;
     
-	CreateConVar("l4d2_parseline_fix_version", PLUGIN_VERSION, "Parse Line Fix Plugin Version", FCVAR_NOTIFY|FCVAR_DONTRECORD);
-	ConVar convar = CreateConVar("l4d2_parseline_fix_blockcomment", "1", "Interpret /* */ as a comment block");
+    CreateConVar("l4d2_parseline_fix_version", PLUGIN_VERSION, "Parse Line Fix Plugin Version", FCVAR_NOTIFY|FCVAR_DONTRECORD);
+    ConVar convar = CreateConVar("l4d2_parseline_fix_blockcomment", "1", "Interpret /* */ as a comment block");
     convar.AddChangeHook(OnConVarChanged);
     g_bBlockComment = convar.BoolValue;
 }

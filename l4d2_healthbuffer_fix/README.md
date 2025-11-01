@@ -6,8 +6,8 @@
   * **When pain_pills_decay_rate is 0, health buffer display fix will be disabled.**
 
 * Applicable to:
+  * L4D1
   * L4D2
-  * *L4D1? (Is there also such a problem? Not tested)*
 
 * Example:
   * Before:

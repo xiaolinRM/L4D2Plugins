@@ -4,23 +4,37 @@
 #include <sourcemod>
 #include <sdkhooks>
 
-#define PLUGIN_VERSION	"1.1"
+#define PLUGIN_VERSION "1.2"
 
 public Plugin:myinfo = 
 {
-	name = "[L4D2] Health Buffer Fix",
-	author = "xiaolinRM",
-	description = "Fix the issue where health buffer display cannot exceed 200",
-	version = PLUGIN_VERSION,
-	url = "https://github.com/xiaolinRM/L4D2Plugins/tree/main/l4d2_healthbuffer_fix"
+    name = "[L4D & L4D2] Health Buffer Fix",
+    author = "xiaolinRM",
+    description = "Fix the issue where health buffer display cannot exceed 200.",
+    version = PLUGIN_VERSION,
+    url = "https://github.com/xiaolinRM/L4D2Plugins/tree/main/l4d2_healthbuffer_fix"
 };
 
+new bool:g_bLeft4Dead2;
 new Float:pain_pills_decay_rate;
+
+public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max)
+{
+    new EngineVersion:engine = GetEngineVersion();
+    if (engine == Engine_Left4Dead) g_bLeft4Dead2 = false;
+    else if (engine == Engine_Left4Dead2) g_bLeft4Dead2 = true;
+    else
+    {
+        strcopy(error, err_max, "Plugin only supports Left 4 Dead 1 & 2.");
+        return APLRes_SilentFailure;
+    }
+    return APLRes_Success;
+}
 
 public OnPluginStart()
 {
-	CreateConVar("l4d2_healthbuffer_fix_version", PLUGIN_VERSION, "Health Buffer Fix Plugin Version", FCVAR_NOTIFY|FCVAR_DONTRECORD);
-	
+    CreateConVar("l4d2_healthbuffer_fix_version", PLUGIN_VERSION, "Health Buffer Fix Plugin Version", FCVAR_NOTIFY|FCVAR_DONTRECORD);
+
     new Handle:convar = FindConVar("pain_pills_decay_rate");
     HookConVarChange(convar, OnConVarChanged);
     pain_pills_decay_rate = GetConVarFloat(convar);
@@ -30,9 +44,9 @@ public OnPluginStart()
         return;
     }
 
-    HookEvent("pills_used", Event_CheckEvent);
-    HookEvent("adrenaline_used", Event_CheckEvent);
     HookEvent("player_hurt", Event_CheckEvent);
+    HookEvent("pills_used", Event_CheckEvent);
+    if (g_bLeft4Dead2) HookEvent("adrenaline_used", Event_CheckEvent);
     for (new client = 1; client <= MaxClients; client++)
         if (IsClientInGame(client))
             SDKHook(client, SDKHook_PostThinkPost, OnPostThinkPost);
@@ -69,9 +83,9 @@ public OnConVarChanged(Handle:convar, const String:oldValue[], const String:newV
     pain_pills_decay_rate = value;
     if (!old && pain_pills_decay_rate)
     {
-        HookEvent("pills_used", Event_CheckEvent);
-        HookEvent("adrenaline_used", Event_CheckEvent);
         HookEvent("player_hurt", Event_CheckEvent);
+        HookEvent("pills_used", Event_CheckEvent);
+        if (g_bLeft4Dead2) HookEvent("adrenaline_used", Event_CheckEvent);
         for (new client = 1; client <= MaxClients; client++)
             if (IsClientInGame(client))
                 SDKHook(client, SDKHook_PostThinkPost, OnPostThinkPost);
@@ -79,9 +93,9 @@ public OnConVarChanged(Handle:convar, const String:oldValue[], const String:newV
     }
     else if (old && !pain_pills_decay_rate)
     {
-        UnhookEvent("pills_used", Event_CheckEvent);
-        UnhookEvent("adrenaline_used", Event_CheckEvent);
         UnhookEvent("player_hurt", Event_CheckEvent);
+        UnhookEvent("pills_used", Event_CheckEvent);
+        if (g_bLeft4Dead2) UnhookEvent("adrenaline_used", Event_CheckEvent);
         for (new client = 1; client <= MaxClients; client++)
             if (IsClientInGame(client))
                 SDKUnhook(client, SDKHook_PostThinkPost, OnPostThinkPost);

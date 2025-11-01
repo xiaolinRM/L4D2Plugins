@@ -5,6 +5,7 @@
   * Interpret /* */ as a comment block.
 
 * Applicable to:
+  * L4D1
   * L4D2
 
 * Example:
