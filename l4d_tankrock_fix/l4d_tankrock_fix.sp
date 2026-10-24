@@ -58,7 +58,7 @@ public void OnPluginStart()
 public void OnConVarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
 {
     int oldFlags = g_iFixFlags;
-    g_iFixFlags = GetConVarInt(convar);
+    g_iFixFlags = convar.IntValue;
     if (oldFlags == g_iFixFlags) return;
 
     int entity = -1;
