@@ -92,5 +92,5 @@ public void CTankRock_ProximityThink_Post(int entity)
 {
     float origin[3];
     GetEntPropVector(entity, Prop_Data, "m_vecAbsOrigin", origin);
-    SetEntDataVector(entity, m_vecPrevOrigin, origin, true);
+    SetEntDataVector(entity, m_vecPrevOrigin, origin);
 }
